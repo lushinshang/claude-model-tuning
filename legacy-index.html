@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人機協同新維度：深度拆解 Claude Code 的模型選擇與心力控制</title>
+    <meta name="description" content="本網頁深入拆解 Anthropic 官方發布之 《Choosing a Claude model and effort level in Claude Code》，協助開發者在日常人機協同中建立更精準的直覺：何時該升級模型（Model），何時該提高心力（Effort）？">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Tailwind OR Vanilla CSS (Vanilla CSS preferred for rich layout control) -->
+    <style>
+        :root {
+            --bg-primary: #fbfbfa;
+            --bg-secondary: #ffffff;
+            --text-primary: #37352f;
+            --text-secondary: #6a6965;
+            --border-color: #edece9;
+            
+            --accent-brand: #d97706; /* Amber-600 */
+            --accent-brand-bg: #fef3c7; /* Amber-100 */
+            
+            /* Callout colors */
+            --ng-border: #3b82f6; /* Blue */
+            --ng-bg: #eff6ff;
+            --lf-border: #10b981; /* Emerald */
+            --lf-bg: #ecfdf5;
+            --cyn-border: #8b5cf6; /* Violet */
+            --cyn-bg: #f5f3ff;
+            
+            --shadow-sm: 0 1px 2px rgba(15, 15, 15, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(15, 15, 15, 0.05), 0 2px 4px -1px rgba(15, 15, 15, 0.03);
+            --shadow-lg: 0 10px 15px -3px rgba(15, 15, 15, 0.05), 0 4px 6px -2px rgba(15, 15, 15, 0.02);
+            
+            --font-sans: 'Outfit', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Dark mode settings */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #191919;
+                --bg-secondary: #202020;
+                --text-primary: #e3e3e2;
+                --text-secondary: #9b9a97;
+                --border-color: #2e2e2e;
+                
+                --accent-brand: #f59e0b;
+                --accent-brand-bg: #3c2e17;
+                
+                --ng-border: #60a5fa;
+                --ng-bg: #172554;
+                --lf-border: #34d399;
+                --lf-bg: #064e3b;
+                --cyn-border: #a78bfa;
+                --cyn-bg: #2e1065;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.625;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 80px;
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header style */
+        header {
+            padding: 60px 0 30px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        .title-category {
+            display: inline-block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-brand);
+            background-color: var(--accent-brand-bg);
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .meta-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Notion callout box */
+        .callout {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--border-color);
+            background-color: var(--bg-secondary);
+            margin: 24px 0;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+        }
+
+        .callout:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .callout-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .callout-content {
+            font-size: 0.95rem;
+        }
+
+        .callout-author {
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* Specific master callouts */
+        .callout.ng {
+            border-left-color: var(--ng-border);
+            background-color: var(--ng-bg);
+        }
+        .callout.lf {
+            border-left-color: var(--lf-border);
+            background-color: var(--lf-bg);
+        }
+        .callout.cyn {
+            border-left-color: var(--cyn-border);
+            background-color: var(--cyn-bg);
+        }
+
+        /* Typographic elements */
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 44px 0 20px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 28px 0 12px;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 18px;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin: 12px 0 24px 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+
+        strong {
+            font-weight: 700;
+        }
+
+        /* Table */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin: 24px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+            background-color: var(--bg-secondary);
+        }
+
+        th {
+            background-color: var(--bg-primary);
+            font-weight: 700;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Mermaid placeholder and renderer */
+        .diagram-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 28px 0;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .diagram-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .mermaid {
+            width: 100%;
+        }
+
+        /* Image simulation block */
+        .image-placeholder {
+            background-color: var(--bg-secondary);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px 24px;
+            margin: 28px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+        }
+
+        .image-placeholder:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-brand);
+        }
+
+        .image-placeholder-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .image-placeholder-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+
+        .image-placeholder-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin-bottom: 16px;
+        }
+
+        /* Copy Button Card style */
+        .toolbox-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin: 32px 0;
+        }
+
+        @media (min-width: 640px) {
+            .toolbox-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .prompt-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .prompt-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .prompt-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: var(--bg-primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: var(--accent-brand);
+        }
+
+        .prompt-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .prompt-content {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            font-family: var(--font-sans);
+            font-size: 0.925rem;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            max-height: 180px;
+            border-left: 3px solid var(--accent-brand);
+        }
+
+        .copy-btn {
+            background-color: var(--text-primary);
+            color: var(--bg-primary);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+            align-self: flex-end;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--accent-brand);
+            color: #ffffff;
+        }
+
+        .copy-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Nav links block at the top */
+        .quick-nav {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .quick-nav a {
+            color: var(--accent-brand);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+        .quick-nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+
+    <!-- Mermaid.js ESM import -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'neutral'
+        });
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <span class="title-category">大師導讀系列</span>
+            <h1>人機協同新維度：深度拆解 Claude Code 的模型選擇與心力控制</h1>
+            <div class="meta-info">
+                <div class="meta-item">
+                    <span>📅</span>
+                    <span>2026-07-15</span>
+                </div>
+                <div class="meta-item">
+                    <span>⏱️</span>
+                    <span>導讀長度：約 8 分鐘</span>
+                </div>
+                <div class="meta-item">
+                    <span>🔗</span>
+                    <span>來源：Anthropic Blog</span>
+                </div>
+            </div>
+            <div class="quick-nav">
+                <span>📁 相關檔案：</span>
+                <a href="claude_model_effort_level_guide.md">Markdown 摘要指南</a> | 
+                <a href="README.md">README 協作文件</a>
+            </div>
+        </header>
+
+        <main>
+            <p>本導讀旨在拆解 Anthropic 官方發布之 《Choosing a Claude model and effort level in Claude Code》，協助開發者在日常人機協同中建立更精準的直覺：<strong>何時該升級模型（Model），何時該提高心力（Effort）？</strong></p>
+
+            <!-- NG Callout -->
+            <div class="callout ng">
+                <div class="callout-icon">💡</div>
+                <div class="callout-content">
+                    <div class="callout-author">吳恩達（Andrew Ng）思維濾鏡</div>
+                    許多開發者誤以為 AI 是在對話中學習的，但事實上，模型在推理階段（Inference）的本質是「靜態預測」。理解這點，是建立自動化 Agent 工作流的起點。在 Agentic Workflow 中，『規劃』與『自我修正』是核心。心力控制（Effort Control）本質上是調整 Agent 在執行 Loop 中的『步幅與驗證閥值』。
+                </div>
+            </div>
+
+            <h2>第一幕：地圖與疆域的本質——唯讀權重與引導 (Weights & Steering)</h2>
+            <p>當我們在 Claude Code 中按下 Enter 時，背後發生了什麼？</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title">圖一：Claude API 推理與切詞工作流</div>
+                <pre class="mermaid">
+                graph TD
+                    A[使用者訊息 + CLAUDE.md + 對話歷史 + 上下文檔案] -->|打包發送| B[API 請求]
+                    B -->|伺服器端 Tokenization| C[Token ID 整數陣列]
+                    C -->|矩陣乘法| D[凍結的權重 Frozen Weights]
+                    D -->|機率計算| E[預測下一個 Token]
+                </pre>
+            </div>
+
+            <h3>1. 唯讀權重（Frozen Weights）的本質</h3>
+            <p>當你的請求被送往 API 時，伺服器會先進行 <strong>Tokenization</strong>（切詞並映射為 vocabulary 的整數 ID）。接著，模型會將這些整數 ID 丟進矩陣，經過一連串的矩陣乘法，輸出下一個 token 的機率分佈。在這個過程中，模型權重是完全凍結的。</p>
+            <ul>
+                <li>你的 Prompt、你的 <code>CLAUDE.md</code> 或是你放入 Context 的上萬行程式碼，<strong>沒有任何一行會修改模型的權重</strong>。</li>
+                <li><strong>Steering vs. Teaching</strong>：把文件放入 Context 只是在「引導（Steering）」機率分佈，並非真的在「教導（Teaching）」模型。這種影響僅限於該次請求，模型並不會因此變聰明或「記住」這項知識。</li>
+            </ul>
+
+            <h3>2. 幻覺的真相</h3>
+            <p>當 Claude 很有自信地呼叫了一個根本不存在的 API（幻覺）時，這並不是因為它「內部資料庫查詢失敗」，而是因為唯讀權重根據訓練時留下的統計模式，計算出這個 token 序列「看起來最合理」。</p>
+            <p>地圖（Map）是模型唯讀權重中所保留的統計機率模型，而疆域（Territory）則是程式碼的真實執行環境。如果一個庫是在模型訓練截止日期後才發布的，那它絕對不會出現在「地圖」中，你只能透過 Context 來引導（Steer）它。</p>
+
+            <div class="image-placeholder">
+                <div class="image-placeholder-icon">🎨</div>
+                <div class="image-placeholder-title">設計概念：地圖與疆域的落差 (Map vs Territory)</div>
+                <div class="image-placeholder-desc">
+                    推薦使用日系可愛風格 (Taiwan kawaii) 繪製：左邊一隻 Chibi 工程師抱著寫有「地圖」的發光卷軸，右邊是佈滿晶片紋路與程式塊的島嶼「疆域」。兩者中間的鴻溝站著一朵困惑的雲朵小精靈「未知未知」。
+                </div>
+            </div>
+
+            <!-- LF Callout -->
+            <div class="callout lf">
+                <div class="callout-icon">📈</div>
+                <div class="callout-content">
+                    <div class="callout-author">簡立峰思維濾鏡</div>
+                    在企業級導入 AI 時，最大的浪費來自於「用高昂的運算成本處理簡單問題」，或是「用低能力配置處理高複雜任務而導致專案失敗」。這是一場經典的運算經濟學遊戲。大模型的 per-token 價格極高，但如果用小模型反覆嘗試（Iterations）失敗，所累積的 tokens 費用與時間成本反而更高。開發者必須建立對應的 Heuristic 與 ROI 戰略。
+                </div>
+            </div>
+
+            <h2>第二幕：通才、專家與專科專家——三種模型心智 (Sonnet, Opus & Fable)</h2>
+            <p>官方針對 Claude 家族在 Claude Code 中的角色，給出了一個非常生動的比喻。我們可以將它們視為三種不同層級的醫生：</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>角色層級</th>
+                            <th>代表模型</th>
+                            <th>特質與心智模型</th>
+                            <th>Low Effort (低心力) 表現</th>
+                            <th>High Effort (高心力) 表現</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>專科專家 (Specialist)</strong></td>
+                            <td>Claude Fable 5</td>
+                            <td>見過幾乎沒有人看過之疑難雜症的頂尖專家。收費最高，但能解決其餘模型無法觸及的深水區難題。</td>
+                            <td>瞥一眼就能精準指出大家卡住的關鍵盲點。</td>
+                            <td>會調動極大資源，針對極度複雜的多步驟重構進行全面推導。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>專家 (Expert)</strong></td>
+                            <td>Claude Opus</td>
+                            <td>具備深厚工程直覺的資深工程師。擁有豐富的外部模式識別能力。</td>
+                            <td>像諮詢專家 5 分鐘。能迅速指出架構 Gotchas，但不會仔細查閱所有程式碼細節。</td>
+                            <td>仔細通讀程式碼，並結合其深厚直覺，給出面面俱到的優化方案。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>優秀通才 (Generalist)</strong></td>
+                            <td>Claude Sonnet</td>
+                            <td>執行力極強、博聞強記的全科醫生。對上下文中的特定程式碼理解極深。</td>
+                            <td>能快速執行精準定義的常規修改，速度快且成本極低。</td>
+                            <td>像給通才整個下午。它會讀完所有相關檔案、跑測試、反覆檢查，對你的 codebase 了若指掌，但缺少「一眼看出程式碼外架構盲點」的經驗直覺。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>總結來說：<strong>Model 代表「多有能力」（How Capable）</strong>，決定了天花板高度與固化知識廣度；而 <strong>Effort 代表「多徹底」（How Thorough）</strong>，決定了它在此天花板之下願意投入多少資源進行探索與驗證。</p>
+
+            <h2>第三幕：心力 (Effort) 到底在算什麼？ (The Engine of Execution)</h2>
+            <p>在 Claude Code 中，心力是一個控制 Claude 實際工作量的手動旋鈕，它影響的是整體的執行引擎：</p>
+            <ul>
+                <li><strong>讀取更多檔案</strong>：主動探索更廣泛的關聯代碼。</li>
+                <li><strong>增加驗證步驟</strong>：更頻繁地跑測試、跑靜態分析或編譯器。</li>
+                <li><strong>多步驟推進（Step Limit）</strong>：在暫停下來向你詢問/確認之前，它會自主嘗試推得更遠、解決更多中途遇到的依賴問題。</li>
+            </ul>
+            <p>不論是 Claude 的推理思維鏈（Thinking）、調用工具（Tool calls），還是最後對你說的話（Text to you），在 API 底層都是<strong>同一種輸出 Token</strong>，以同樣的費率計費。在高心力模式下，Claude 會在第一步先建立計畫。但這個計畫是動態的：如果計畫有 3 個除錯假說，在執行第 1 步時就跑測試抓到了 bug，Claude 會<strong>動態修剪計畫</strong>，跳過假說 2 與 3，直接進入修復與合併，避免浪費額外 Token。</p>
+
+            <div class="image-placeholder">
+                <div class="image-placeholder-icon">🎨</div>
+                <div class="image-placeholder-title">設計概念：人機協作的三階段循環 (Pre/During/Post-implementation)</div>
+                <div class="image-placeholder-desc">
+                    推薦使用日系可愛風格 (Taiwan kawaii) 繪製：一個 Chibi 工程師與一隻發光的半透明 AI 軟泥精靈坐在書桌前，一同指著右側漂浮的圓形循環。循環上有三個泡泡節點，分別是「實作前 (放大鏡)」、「實作中 (筆記本)」與「實作後 (打勾框)」。
+                </div>
+            </div>
+
+            <!-- CYN Callout -->
+            <div class="callout cyn">
+                <div class="callout-icon">🤝</div>
+                <div class="callout-content">
+                    <div class="callout-author">陳縕儂思維濾鏡</div>
+                    人機互動的關鍵在於「期望管理」與「主導權的合理分配」。開發者不能把 AI 當作黑盒子，必須隨時理解自己是在與哪一種特質的模型對話。此外，設計良好的人機對齊循環（如實作後的隨堂測驗）能讓開發者更安心，也更容易建立起互信的開發默契。
+                </div>
+            </div>
+
+            <h2>第四幕：黃金診斷法則 (Heuristics for Debugging)</h2>
+            <p>當 Claude Code 給出的答案錯了，開發者不應該盲目亂調旋鈕，而是應該依循以下診斷路徑：</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title">圖二：Claude Code 報錯後的診斷路徑</div>
+                <pre class="mermaid">
+                flowchart TD
+                    A[Claude Code 給出錯誤答案] --> B{檢查 Context 上下文}
+                    B -->|Context 不足或模糊| C[優化 Prompt / 修改 CLAUDE.md / 精確指定檔案]
+                    B -->|Context 充足且 Claude 已經盡力| D{分析錯誤原因}
+                    
+                    D -->|它真的不懂 / 能力不足 / 邏輯死胡同| E[調整 Model: 換用更大模型]
+                    D -->|它偷懶 / 漏看檔案 / 沒跑測試 / 寫一半放棄| F[調整 Effort: 提高心力等級]
+                </pre>
+            </div>
+
+            <h3>1. 調整 Model 的訊號：問題「太難了」</h3>
+            <p><strong>特徵</strong>：小模型（Sonnet）給出了非常自信的錯誤答案。你給了它完整的 Context，甚至一行行教它，它依然陷入邏輯死胡同。此時你應該<strong>升級模型</strong>（例如從 Sonnet 升級至 Opus 或 Fable）。</p>
+
+            <h3>2. 調整 Effort 的訊號：Claude「不夠努力」</h3>
+            <p><strong>特徵</strong>：Claude 原本可以寫對，但它為了省 Token，選擇不去讀某個定義檔，或者修改完代碼後沒有跑測試，導致漏掉邊際狀況；或者重構到一半直接放棄向你提問。此時你應該<strong>提高 Effort</strong>，迫使它進行更徹底的雙重檢查。</p>
+
+            <h2>第五幕：邊際成本與 Token 經濟學 (Token Economics)</h2>
+            <p>如何取得 ROI 的最佳平衡點？這是一個動態的過程：</p>
+            <ul>
+                <li><strong>例行工作：使用小模型（Sonnet）+ 預設/低 Effort</strong>。大模型在這種任務上會產生多餘的驗證步驟，造成雙重浪費。</li>
+                <li><strong>複雜任務：使用大模型（Fable / Opus）+ 高 Effort</strong>。小模型在極限邊緣掙扎時，會不斷出錯、重試，燒掉大量的 iteration loops，累積龐大的 token 帳單；大模型通常能一次到位，最終的總成本反而更低。</li>
+                <li><strong>控制邊界</strong>：<code>max_tokens</code> 會像一堵牆一樣直接在中間粗暴截斷 output，不建議作為日常控制手段。相反地，在 Prompt 中加上「keep it brief（保持簡潔）」或設定 <code>task budget</code> 是更好的軟性引導。</li>
+            </ul>
+
+            <h2>🛠️ 開發者工具箱：黃金對齊 Prompts</h2>
+            <p>以下工具卡片提供了一鍵複製功能，建議在開發時貼入對話視窗使用：</p>
+
+            <div class="toolbox-grid">
+                <!-- Card 1 -->
+                <div class="prompt-card">
+                    <div class="prompt-header">
+                        <span class="prompt-title">1. 實作前：盲點檢視</span>
+                        <span class="prompt-tag">PRE-IMPLEMENTATION</span>
+                    </div>
+                    <div class="prompt-content" id="prompt-1">我們即將開始實作以下任務：[填入任務描述]。
+在開始寫任何程式碼或制定計畫之前，請先進行「盲點檢視（Blind Spot Pass）」：
+1. 列出你目前 Context 中缺失的關鍵上下文（例如未讀取的檔案、環境配置、依賴庫版本）。
+2. 指出該任務中可能存在的「未知未知（Unknown Unknowns）」，並提出 3 個你需要我澄清的關鍵設計決策。
+先不要提供實作計畫，等我回覆你的提問。</div>
+                    <button class="copy-btn" onclick="copyPrompt('prompt-1', this)">
+                        <span>📋</span> <span>複製 Prompt</span>
+                    </button>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="prompt-card">
+                    <div class="prompt-header">
+                        <span class="prompt-title">2. 實作中：偏差記錄</span>
+                        <span class="prompt-tag">DURING-IMPLEMENTATION</span>
+                    </div>
+                    <div class="prompt-content" id="prompt-2">在接下來的修改中，如果發現實際程式碼現況與我們原先的設計計畫有落差，或是需要做出折衷設計（Trade-off），請立即暫停並更新我們的 `implementation-notes.md`：
+1. 記錄偏離的原因與當前的程式碼限制。
+2. 列出當前決策對系統其他模組的潛在影響（Side Effects）。
+3. 提出修正後的替代方案，等我確認後再繼續。</div>
+                    <button class="copy-btn" onclick="copyPrompt('prompt-2', this)">
+                        <span>📋</span> <span>複製 Prompt</span>
+                    </button>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="prompt-card">
+                    <div class="prompt-header">
+                        <span class="prompt-title">3. 實作後：隨堂測驗</span>
+                        <span class="prompt-tag">POST-IMPLEMENTATION</span>
+                    </div>
+                    <div class="prompt-content" id="prompt-3">你已經完成了代碼修改。在我們進行 Git Commit 與 Merge 之前，請為我出一份包含 3 個問題的「隨堂測驗（Quiz）」：
+1. 針對你剛剛修改中最微妙的邏輯、臨界值處理（Edge Case）或潛在的 Concurrency 點進行提問。
+2. 題目必須是選擇題或簡答題，旨在測試我是否真正理解你的修改，而非盲目相信你的代碼。
+請只出題，等我回答後再批改並給出解釋。</div>
+                    <button class="copy-btn" onclick="copyPrompt('prompt-3', this)">
+                        <span>📋</span> <span>複製 Prompt</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Copy logic -->
+    <script>
+        function copyPrompt(id, button) {
+            const codeBlock = document.getElementById(id);
+            const textToCopy = codeBlock.textContent;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span>✅</span> <span>已複製！</span>';
+                button.style.backgroundColor = 'var(--accent-brand)';
+                button.style.color = '#ffffff';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.backgroundColor = 'var(--text-primary)';
+                    button.style.color = 'var(--bg-primary)';
+                }, 1500);
+            }).catch(err => {
+                console.error('無法複製文字: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
