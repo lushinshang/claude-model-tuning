@@ -133,6 +133,13 @@
   .copy-btn:hover{background:var(--accent);color:#fff;}
   .copy-btn.is-copied{background:var(--accent);color:#fff;}
 
+  figure.summary-figure{margin:0; padding:24px 24px 0;}
+  figure.summary-figure img{
+    width:100%; max-width:640px; display:block; margin:0 auto;
+    border-radius:12px; cursor:zoom-in;
+    box-shadow:0 6px 24px rgba(0,0,0,0.08);
+  }
+
   figure.section-figure{
     margin:32px 0;
   }
@@ -200,6 +207,10 @@
 </style>
 </head>
 <body>
+
+<figure class="summary-figure">
+  <img src="images/summary-banner.webp" alt="橫幅插圖：一隻頭上有金色光環的可愛機器人角色，上方文字寫著「換模型還是加 Effort？」">
+</figure>
 
 <nav class="toc">
   <div class="inner">
@@ -436,7 +447,7 @@
       lightbox.classList.add("is-open");
     }
     function closeLightbox(){ lightbox.classList.remove("is-open"); lightboxImg.src = ""; }
-    document.querySelectorAll("figure.section-figure img").forEach(function(img){
+    document.querySelectorAll("figure.section-figure img, figure.summary-figure img").forEach(function(img){
       img.addEventListener("click", function(){ openLightbox(img); });
     });
     lightbox.addEventListener("click", closeLightbox);
