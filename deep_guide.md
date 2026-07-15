@@ -15,7 +15,7 @@
 模型是天花板，Effort 是你允許它在天花板底下走多遠。把 Effort 轉到最大，天花板不會變高；換成更貴的模型，如果問題只是它偷懶漏看一個檔案，你也只是花更多錢重複同一個懶惰。
 
 <figure class="section-figure">
-  <img src="images/infographic-model-effort.png" alt="模型與 Effort 對比插圖：左邊機器人角色站在標示「懂不懂的天花板」的金色天花板下方，右邊同一個機器人角色沿著標示「願不願意做確實，走多遠」的小路往前走">
+  <img src="images/infographic-model-effort.webp" alt="模型與 Effort 對比插圖：左邊機器人角色站在標示「懂不懂的天花板」的金色天花板下方，右邊同一個機器人角色沿著標示「願不願意做確實，走多遠」的小路往前走">
   <figcaption>模型決定天花板高度，Effort 決定天花板底下走多遠——這兩件事從一開始就不是同一顆旋鈕。</figcaption>
 </figure>
 
@@ -26,14 +26,14 @@
 先講模型。當你送出一句話，連同你的說明文件、對話紀錄、打開的檔案，Claude 做的第一件事，是把這些文字拆成一個個小碎片，每個碎片對應一個固定的數字編號——這一步純粹是格式轉換，跟聰不聰明無關。下面這張圖示範了這個過程：一段程式碼被拆成好幾小塊，每一塊都查表換成一個固定的數字，Claude 的內部字典裡大約存了十萬個這樣的編號。
 
 <figure class="section-figure">
-  <img src="images/tokenization.png" alt="文字拆解示意圖：程式碼片段被拆成 const、x、=、await、fetch、( 等小碎片，各自對應一個固定的數字編號">
+  <img src="images/tokenization.webp" alt="文字拆解示意圖：程式碼片段被拆成 const、x、=、await、fetch、( 等小碎片，各自對應一個固定的數字編號">
   <figcaption>你打的字，會先被拆成一串數字，才送進 Claude 的大腦——這一步只是換個寫法，不代表它已經看懂了。</figcaption>
 </figure>
 
 這串數字接著會通過 Claude 的「大腦」——一組在訓練的時候就已經定型、多達數十億個數字的參數。重點是「定型」兩個字：這組參數，在你使用的當下是**固定死的、不能改**。你的提示詞寫得再仔細、說明文件堆得再厚，都不會讓 Claude 的大腦多長一塊肉出來，只是在幫它「這一次」猜答案時提供線索。換句話說，你給的資料是在「指路」，不是在「教它學新東西」。這也是為什麼你這次對話教會 Claude 一個知識，下次開新對話它就忘光光：它每次都是同一顆定型的大腦，從零開始重新猜。
 
 <figure class="section-figure">
-  <img src="images/frozen-weights.png" alt="固定大腦示意圖：輸入的數字經過標示為「訓練後就鎖死」的參數矩陣，輸出下一個字的機率，例如 fetch 62%、Promise 14%">
+  <img src="images/frozen-weights.webp" alt="固定大腦示意圖：輸入的數字經過標示為「訓練後就鎖死」的參數矩陣，輸出下一個字的機率，例如 fetch 62%、Promise 14%">
   <figcaption>Claude 的大腦訓練完就鎖住了。你給的資料只能幫它「這一次」猜對，不會真的寫進它的記憶裡。</figcaption>
 </figure>
 
@@ -42,14 +42,14 @@
 那 Effort 到底在做什麼？它不是「想比較久」，而是決定 Claude 願意在同一顆大腦底下，多繞幾圈路把事情做確實：要讀幾個檔案、要檢查幾次、卡關的時候要不要自己想辦法排除，還是直接停下來問你。下圖是同一個「修一個壞掉的測試」的任務，在 Effort 調低和調高時實際跑的路徑：Effort 低的時候，Claude 讀一個檔案就直接動手改，順手回你「改好了」；Effort 高的時候，它會多讀設定檔跟原始檔案、想一下、改完還會跑一次測試確認，最後告訴你問題到底出在哪裡。同樣一顆大腦，同樣「懂不懂」的天花板，但因為多繞了幾步路，答案的完整度差了一大截。
 
 <figure class="section-figure">
-  <img src="images/effort-comparison.png" alt="修測試任務的 Effort 對比圖：Effort 低只讀測試檔就直接修改；Effort 高額外讀原始檔與設定檔、想一下、修改、跑測試、再次確認，並給出問題根本原因">
+  <img src="images/effort-comparison.webp" alt="修測試任務的 Effort 對比圖：Effort 低只讀測試檔就直接修改；Effort 高額外讀原始檔與設定檔、想一下、修改、跑測試、再次確認，並給出問題根本原因">
   <figcaption>同一個任務，Effort 低跟 Effort 高走的是完全不同長度的路——多出來的不是「想更久」，是「多做了幾件事」。</figcaption>
 </figure>
 
 而不管 Claude 是在心裡盤算、動手操作檔案，還是打字回你話，這三種動作在算錢的時候其實是同一種東西，都用同樣的價格計費。
 
 <figure class="section-figure">
-  <img src="images/output-tokens.png" alt="輸出分類示意圖：同一顆大腦產生「心裡盤算」「動手操作」「回你的話」三種輸出，並註明這三種在計費上完全一樣，只是內容不同">
+  <img src="images/output-tokens.webp" alt="輸出分類示意圖：同一顆大腦產生「心裡盤算」「動手操作」「回你的話」三種輸出，並註明這三種在計費上完全一樣，只是內容不同">
   <figcaption>心裡盤算、動手操作、回你話——這三種背後算的是同一份帳單，價格沒有差別，差的只是這次它做了什麼。</figcaption>
 </figure>
 
@@ -60,14 +60,14 @@
 當 Claude 給錯答案，先別急著動旋鈕。第一件事是確認你給的資訊夠不夠——如果連檔案路徑、需求、限制條件都沒講清楚，不管換多貴的模型、開多高的 Effort，都只是在讓一個蒙著眼的人亂猜。資訊補齊之後如果還是錯，才輪到判斷「它到底是怎麼錯的」。
 
 <figure class="section-figure">
-  <img src="images/decision-framework.png" alt="判斷流程圖：Claude 答錯了，分成兩條路——左邊是漏看檔案、沒測試、做到一半放棄，這時候要提高 Effort；右邊是東西都看完了還是自信地講錯，這時候要換模型；下方提醒也可能是給的資訊或任務範圍要調整">
+  <img src="images/decision-framework.webp" alt="判斷流程圖：Claude 答錯了，分成兩條路——左邊是漏看檔案、沒測試、做到一半放棄，這時候要提高 Effort；右邊是東西都看完了還是自信地講錯，這時候要換模型；下方提醒也可能是給的資訊或任務範圍要調整">
   <figcaption>兩條岔路：漏做事，是 Effort 不夠；東西都看完了還是講錯，是能力不夠。分不清這兩者，旋鈕永遠轉錯邊。</figcaption>
 </figure>
 
 左邊那條路——它明明有能力做對，卻漏看了一個檔案、沒跑測試，或是做到一半就放棄丟回來問你——這是**Effort 不夠**的訊號，對策是提高 Effort，逼它把該做的檢查都走完。右邊那條路——它把你給的東西都看完了，態度也很認真，但答案依然自信地講錯，通常是碰到很細膩的問題，或是它本來就沒學過的知識，邏輯卡進死胡同——這才是**能力不夠**的訊號，對策是換一顆更強的模型。這兩種錯誤看起來很像（反正都是「答案不對」），但背後的原因完全不同，解法也完全不能對調。
 
 <figure class="section-figure">
-  <img src="images/infographic-diagnose.png" alt="診斷插圖：機器人角色標示「Claude 答錯了」並打一個大叉，分岔成兩條路，左邊角色拿著清單標示「漏做事」對應「提高 Effort」，右邊角色被一堆書包圍標示「讀完了還是不懂」對應「換模型」">
+  <img src="images/infographic-diagnose.webp" alt="診斷插圖：機器人角色標示「Claude 答錯了」並打一個大叉，分岔成兩條路，左邊角色拿著清單標示「漏做事」對應「提高 Effort」，右邊角色被一堆書包圍標示「讀完了還是不懂」對應「換模型」">
   <figcaption>同樣是「答錯」，成因完全不同——分岔點就在「它有沒有把該做的事做完」。</figcaption>
 </figure>
 
@@ -78,21 +78,21 @@
 先看例行工作——像是照著明確要求改一小段程式碼、補一個測試。這種工作不管用便宜還是昂貴的模型，幾乎馬上就能做到一樣好，再往上加 Effort，換來的只是「多檢查幾次」，品質幾乎不會再進步。
 
 <figure class="section-figure">
-  <img src="images/routine-tokens.png" alt="簡單任務的花費效益曲線：貴模型和便宜模型的品質曲線幾乎在同一點就打平，Effort 繼續往上加，也只是換來重複檢查，品質沒有再提升">
+  <img src="images/routine-tokens.webp" alt="簡單任務的花費效益曲線：貴模型和便宜模型的品質曲線幾乎在同一點就打平，Effort 繼續往上加，也只是換來重複檢查，品質沒有再提升">
   <figcaption>簡單任務上，貴的模型和便宜的模型幾乎同時碰到同一片天花板——過線之後多花的每一分錢，都只是在重複確認同一個答案。</figcaption>
 </figure>
 
 再看複雜任務——多步驟的架構調整、範圍模糊的疑難雜症。這時候兩者的差距會明顯拉開：貴的模型天花板本來就比較高，而且達到同樣的品質，花的錢反而比便宜模型少更多。
 
 <figure class="section-figure">
-  <img src="images/complex-tokens.png" alt="複雜任務的花費效益曲線：貴模型的品質曲線明顯高於便宜模型，貴模型只開中等 Effort，品質就追上便宜模型開最高 Effort 的表現">
+  <img src="images/complex-tokens.webp" alt="複雜任務的花費效益曲線：貴模型的品質曲線明顯高於便宜模型，貴模型只開中等 Effort，品質就追上便宜模型開最高 Effort 的表現">
   <figcaption>複雜任務反過來——便宜模型得一路試錯燒掉很多錢才勉強逼近，貴模型用中等 Effort 就先一步到位。同樣的品質，花更少的錢，不是廣告詞，是實際花費畫出來的曲線。</figcaption>
 </figure>
 
 這兩張圖合起來，其實是同一個結論的兩面：例行工作留給便宜模型、用預設 Effort 就好，省下來的錢比你想像的多；真正模糊、多步驟、容易讓便宜模型反覆試錯燒錢的任務，才值得一開始就上貴的模型、開高 Effort——因為便宜模型在那種任務上，「便宜」只是帳面上看起來省，它燒掉的嘗試次數，最後往往比貴模型的價格還高。
 
 <figure class="section-figure">
-  <img src="images/infographic-economics.png" alt="花費比較插圖：左邊小豬撲滿角色標示「便宜模型」，被一堆散亂的錢幣和曲折路徑包圍，標示「複雜任務燒很多錢」，右邊小豬撲滿角色標示「貴模型」，戴著皇冠站在一條筆直的金色道路上，標示「複雜任務反而更省」">
+  <img src="images/infographic-economics.webp" alt="花費比較插圖：左邊小豬撲滿角色標示「便宜模型」，被一堆散亂的錢幣和曲折路徑包圍，標示「複雜任務燒很多錢」，右邊小豬撲滿角色標示「貴模型」，戴著皇冠站在一條筆直的金色道路上，標示「複雜任務反而更省」">
   <figcaption>便宜模型在複雜任務上繞的冤枉路，往往比貴模型的價格還貴。</figcaption>
 </figure>
 

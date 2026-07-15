@@ -17,14 +17,14 @@
 先講模型。當你的訊息連同 CLAUDE.md、對話紀錄、你打開的檔案一起送出去，伺服器做的第一件事是**斷詞（Tokenization）**——把文字切成一個個對應到詞彙表的整數編號。下面這張圖示範了這個過程：一段程式碼被拆成 `const`、`x`、`=`、`await`、`fetch`、`(` 這幾塊，每一塊對應一個固定的數字 ID，詞彙表裡大約有十萬個這樣的編號在候補。
 
 <figure class="section-figure">
-  <img src="images/tokenization.png" alt="斷詞示意圖：程式碼片段被拆成 const、x、=、await、fetch、( 等片段，各自對應詞彙表中的整數 ID">
+  <img src="images/tokenization.webp" alt="斷詞示意圖：程式碼片段被拆成 const、x、=、await、fetch、( 等片段，各自對應詞彙表中的整數 ID">
   <figcaption>文字送進模型前，先被切成整數 ID——這一步和模型「聰不聰明」無關，純粹是格式轉換。</figcaption>
 </figure>
 
 這串數字接著會撞進模型的權重——一組在訓練階段就已經定型、數量高達數十億的參數矩陣。關鍵字是「定型」：權重在你送出請求的當下，是**唯讀**的。你的 Prompt 寫得再仔細、CLAUDE.md 堆得再厚，都不會改寫任何一個參數，只是在幫這次的機率計算「指路」——業界說法是 **Steering（引導）**，而不是 **Teaching（教導）**。這也是為什麼 Claude 不會因為你這次對話教了它一個新知識，下次就自動記得：它下次還是同一組唯讀權重，從零開始重新推理。
 
 <figure class="section-figure">
-  <img src="images/frozen-weights.png" alt="唯讀權重示意圖：輸入 token 經過標示為 read-only after training 的權重矩陣，輸出下一個 token 的機率分布，例如 fetch 0.62、Promise 0.14">
+  <img src="images/frozen-weights.webp" alt="唯讀權重示意圖：輸入 token 經過標示為 read-only after training 的權重矩陣，輸出下一個 token 的機率分布，例如 fetch 0.62、Promise 0.14">
   <figcaption>權重訓練完就鎖死了。你的 Context 只能引導這次的機率分布，不會寫回模型本身。</figcaption>
 </figure>
 
@@ -33,14 +33,14 @@
 那心力（Effort）在算什麼？它不是一根控制「思考時間」的旋鈕，而是控制 Claude 在同一組權重底下，願意跑幾輪這個迴圈：讀幾個檔案、驗證幾次、中途卡關時要不要自己想辦法排除，還是直接停下來問你。下圖是同一個「修一個測試失敗」的任務，在低心力和高心力下實際的執行軌跡：低心力讀一個檔案就動手改，順手回報「改好了」；高心力則會多讀設定檔和來源檔案、想一下、改完還跑測試驗證，最後給出一個交代清楚問題根因的結論。同一組權重，同一個「懂不懂」的天花板，但因為多繞了幾步路，答案的完整度差了一大截。
 
 <figure class="section-figure">
-  <img src="images/effort-comparison.png" alt="修測試任務的心力對比圖：低心力只讀測試檔就直接修改，約 400 tokens；高心力額外讀來源檔與設定檔、思考、修改、跑測試、再次驗證，約 2800 tokens，並給出根因說明">
+  <img src="images/effort-comparison.webp" alt="修測試任務的心力對比圖：低心力只讀測試檔就直接修改，約 400 tokens；高心力額外讀來源檔與設定檔、思考、修改、跑測試、再次驗證，約 2800 tokens，並給出根因說明">
   <figcaption>同一個任務，低心力和高心力走的是完全不同長度的路——多出來的步驟不是「想更久」，是「多做了幾件事」。</figcaption>
 </figure>
 
 而不管 Claude 是在思考、呼叫工具讀檔案，還是把結果打成文字回你，這三種輸出在計費上其實是同一種東西——都是 token，都用同一個費率算錢。
 
 <figure class="section-figure">
-  <img src="images/output-tokens.png" alt="輸出 token 分類圖：同一組權重產生 thinking、tool call、text to you 三種輸出，底下標註 Same loop. Same per-token price. The only difference is what the tokens say.">
+  <img src="images/output-tokens.webp" alt="輸出 token 分類圖：同一組權重產生 thinking、tool call、text to you 三種輸出，底下標註 Same loop. Same per-token price. The only difference is what the tokens say.">
   <figcaption>思考、呼叫工具、回你話——底層都是同一個迴圈吐出來的 token，價格沒有差別，差的只是這次吐出來的內容是什麼。</figcaption>
 </figure>
 
@@ -51,7 +51,7 @@
 當 Claude 給錯答案，先別急著動旋鈕。第一件事是確認 Context 本身夠不夠——如果連檔案路徑、規格、限制條件都沒給齊，不管換多貴的模型、開多高的心力，都是在拿石頭考瞎子。Context 補齊之後如果還是錯，才輪到判斷「它到底是怎麼錯的」。
 
 <figure class="section-figure">
-  <img src="images/decision-framework.png" alt="診斷決策圖：Claude got it wrong 分岔成兩條路徑，左邊是跳過檔案沒跑測試中途放棄則提高 Effort，右邊是讀完所有東西仍自信地答錯則換模型，底部提示也可能是 Context CLAUDE.md 或任務範圍需要修正">
+  <img src="images/decision-framework.webp" alt="診斷決策圖：Claude got it wrong 分岔成兩條路徑，左邊是跳過檔案沒跑測試中途放棄則提高 Effort，右邊是讀完所有東西仍自信地答錯則換模型，底部提示也可能是 Context CLAUDE.md 或任務範圍需要修正">
   <figcaption>兩條岔路：漏做事，是心力不夠；讀完了還是錯，是能力不夠。分不清這兩者，旋鈕永遠轉錯邊。</figcaption>
 </figure>
 
@@ -64,14 +64,14 @@
 先看例行任務——像是照著明確規格改一小段程式碼、補一個單元測試。這種任務兩種模型幾乎立刻就能碰到品質天花板，再往上加心力，買到的只是「多驗證幾次」，品質曲線幾乎是平的。
 
 <figure class="section-figure">
-  <img src="images/routine-tokens.png" alt="簡單任務的 token 效益曲線：大模型與小模型的品質曲線幾乎在同一點收斂，med 和 max 心力等級疊在收斂點附近，說明超過該點後多花的 token 只換來重複驗證而非品質提升">
+  <img src="images/routine-tokens.webp" alt="簡單任務的 token 效益曲線：大模型與小模型的品質曲線幾乎在同一點收斂，med 和 max 心力等級疊在收斂點附近，說明超過該點後多花的 token 只換來重複驗證而非品質提升">
   <figcaption>簡單任務上，大模型和小模型幾乎同時撞到同一片天花板——過線之後多花的每一分錢，都只是在重複確認同一個答案。</figcaption>
 </figure>
 
 再看複雜任務——多步驟的架構調整、邊界模糊的疑難雜症。這時候兩條曲線會明顯拉開：大模型的天花板本來就比較高，而且達到同樣品質所需要的 token 量，反而比小模型少更多。
 
 <figure class="section-figure">
-  <img src="images/complex-tokens.png" alt="複雜任務的 token 效益曲線：大模型曲線明顯高於小模型，med 心力的大模型品質已追上 max 心力的小模型，兩者之間標註 same quality, fewer tokens">
+  <img src="images/complex-tokens.webp" alt="複雜任務的 token 效益曲線：大模型曲線明顯高於小模型，med 心力的大模型品質已追上 max 心力的小模型，兩者之間標註 same quality, fewer tokens">
   <figcaption>複雜任務反過來——小模型得燒掉大量 token 一路試錯才勉強逼近，大模型用中等心力就先一步到位，「same quality, fewer tokens」不是廣告詞，是這條曲線自己畫出來的。</figcaption>
 </figure>
 

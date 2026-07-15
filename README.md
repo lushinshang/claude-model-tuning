@@ -14,6 +14,12 @@
 
 ---
 
+## 📝 待辦（TODO）
+
+- [ ] **全文總覽 banner 圖**：計畫用同一套 kawaii 風格生成一張涵蓋全文重點的橫幅圖，放在 `index.html` 開頭與本檔案最上方，讓 GitHub 也能直接看到預覽圖。已嘗試用 `codex exec` 的 `image_gen` 生成，但因為卡片數量多、prompt 較長，連續幾次都在時限內沒完成（timeout），先擱置，之後再繼續生成。
+
+---
+
 ## 📂 檔案結構
 
 | 檔案 / 目錄 | 說明 |
@@ -21,7 +27,7 @@
 | `index.html` | 正式上架的導讀網頁（GitHub Pages 首頁），含摘要、五段主敘事、模型角色速查表、開發者工具箱、總結 |
 | `deep_guide.md` | `index.html` 對應的 Markdown 原始稿，適合在 Obsidian / Typora 離線閱讀 |
 | `deep_guide.normalized.md` | 經過中文標點正規化的版本（供轉檔流程使用） |
-| `images/` | 文章插圖，分兩類：`tokenization.png`／`frozen-weights.png`／`effort-comparison.png`／`output-tokens.png`／`decision-framework.png`／`routine-tokens.png`／`complex-tokens.png` 是原文插圖；`infographic-*.png` 是另外生成的原創 kawaii 資訊圖 |
+| `images/` | 文章插圖，統一為 `.webp` 格式（壓縮率高、體積小）。分兩類：`tokenization.webp`／`frozen-weights.webp`／`effort-comparison.webp`／`output-tokens.webp`／`decision-framework.webp`／`routine-tokens.webp`／`complex-tokens.webp` 是原文插圖；`infographic-*.webp` 是另外生成的原創 kawaii 資訊圖 |
 | `claude_model_effort_level_guide.md` | 專案早期版本的導讀摘要（五幕結構，融合多重思維濾鏡），保留作為歷史版本參照 |
 | `legacy-index.html` | 專案最早期的 Notion 風格導讀網頁草稿，尚未正式發布過，保留作為歷史版本參照 |
 
@@ -78,7 +84,15 @@
 - 把舊版 `index.html` 改名為 `legacy-index.html` 保留下來，把工作檔正式改名為 `index.html`。
 - 重新驗證 HTML 語法、確認所有圖片路徑在改名後依然正確載入。
 - 撰寫這份完整歷程記錄（也就是你現在讀到的這份 `README.md`）。
-- 初始化 git、建立 GitHub repo `lishinshang/claude-model-tuning` 並推送、啟用 GitHub Pages。
+- 初始化 git、建立 GitHub repo `lishinshang/claude-model-tuning` 並推送、啟用 GitHub Pages。過程中確認 gh CLI 實際登入的帳號拼法是 `lushinshang`（跟使用者原本說的 `lishinshang` 不同），先跟使用者確認後才建立 repo。
+
+### 9. 全文總覽圖、統一圖片格式
+使用者接著要求：（1）用同樣的 kawaii 風格生成一張涵蓋全文重點的橫幅圖，放在文章開頭，讓 GitHub 也能直接看到預覽圖；（2）所有圖片轉成 `.webp`；（3）更新這份 README 並上傳。
+
+執行過程：
+- 用 `codex exec` 的 `image_gen` 生成橫幅圖，但因為卡片數量多、prompt 較長，連續三次嘗試都在時限內沒完成（timeout），簡化 prompt 重試也還是超時。使用者主動決定先跳過這一項，改成在本檔案留 TODO，之後再繼續生成——這個項目目前**還沒完成**，見上方「待辦」區塊。
+- 用 `cwebp` 把 `images/` 內所有原文插圖與原創 kawaii 插圖（共 10 張）轉成 `.webp`，品質設定 85，檔案體積平均縮小到原本的 15-20%；同步更新 `index.html`、`deep_guide.md`、`deep_guide.normalized.md`、本檔案裡所有的圖片路徑，刪除轉檔後不再使用的原始 `.png`／`.svg` 檔案。
+- 更新這份 README（新增本節與待辦區塊），commit 並推送到 GitHub。
 
 ---
 
